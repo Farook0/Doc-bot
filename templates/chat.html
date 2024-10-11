@@ -1,9 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            background-color: #34495e;
+            border-radius: 10px;
+            width: 300px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .chat-header img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .chat-body {
+            flex-grow: 1;
+            background-color: #34495e;
+            overflow-y: auto;  /* Allows vertical scrolling */
+            padding: 10px;
+            max-height: 400px; /* Set a maximum height for the chat body */
+        }
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: #3498db;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .bot-message {
+            background-color: #2c3e50;
+            color: white;
+        }
+        .chat-input {
+            border-top: 1px solid #2c3e50;
+            padding: 10px;
+            display: flex;
+        }
+        .chat-input input {
+            flex-grow: 1;
+            border: none;
+            background-color: #34495e;
+            color: white;
+            padding: 5px;
+        }
+        .chat-input input::placeholder {
+            color: #95a5a6;
+        }
+        .send-button {
+            background-color: transparent;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #95a5a6;
+            margin-top: 5px;
+        }
+    </style>
+</head>
 <body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <img src="https://img.freepik.com/free-vector/friendly-robot-floating-space_1308-161950.jpg" alt="Medical Chatbot Avatar">
+            <span>Medical Chatbot</span>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <!-- Chat messages will appear here -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your message...">
+            <button class="send-button" onclick="sendMessage()">▶</button>
+        </div>
+    </div>
 
-<h1>My First Heading</h1>
-<p>My first paragraph.</p>
+    <script>
+        // Function to get the current time
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
 
+        // Function to add messages to the chat window
+        function addMessage(message, isUser) {
+            const chatBody = document.getElementById('chatBody');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.textContent = message;
+
+            // Create a timestamp element
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = 'timestamp';
+            timestampDiv.textContent = getCurrentTime(); // Get the current time
+
+            // Append the message and timestamp to the message div
+            messageDiv.appendChild(timestampDiv);
+            chatBody.appendChild(messageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+        }
+
+        // Function to send the user input to the Flask backend
+        function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+            if (message) {
+                addMessage(message, true); // Display user message
+                userInput.value = ''; // Clear input field
+
+                // Send POST request to Flask backend
+                fetch('/get', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `msg=${encodeURIComponent(message)}` // Send the user's message
+                })
+                .then(response => response.json()) // Expect JSON response from backend
+                .then(data => {
+                    addMessage(data.response, false); // Display bot response
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    addMessage('Sorry, I encountered an error.', false); // Display error message
+                });
+            }
+        }
+
+        // Send the message when the user presses Enter
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
 </body>
 </html>
