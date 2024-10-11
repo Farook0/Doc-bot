@@ -8,3 +8,4 @@ pydf
 pinecone
 langchain-community
 python-dotenv
+-e .
